@@ -4,9 +4,9 @@ exports.crearReceta = async (req, res) => {
     try {
         const nuevaReceta = new Receta(req.body);
         await nuevaReceta.save();
-        res.status(201).json({ mesaje: 'Receta Creada', receta: nuevaReceta});
+        res.status(201).json({ mensaje: 'Receta Creada', receta: nuevaReceta});
     } catch (error) {
-        res.status(500).josn({error: 'Surgio un error inesperado'});
+        res.status(500).json({error: 'Surgio un error inesperado'});
     }
 }
 
