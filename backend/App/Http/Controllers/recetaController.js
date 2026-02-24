@@ -27,6 +27,28 @@ exports.obtenerRecetas = async (req, res) => {
     }
 };
 
+//Funcion Show (obtener una receta por ID)
+exports.obtenerRecetaPorId = async (req, res) => {
+    const { id } = req.params;
+    const { esObjectIdValido } = require('../Request/recetaValidationRules');
+
+    if (!esObjectIdValido(id)) {
+        return res.status(400).json({ error: 'El ID proporcionado no es válido' });
+    }
+
+    try {
+        const receta = await Receta.findById(id);
+
+        if (!receta) {
+            return res.status(404).json({ error: 'Receta no encontrada' });
+        }
+
+        return res.status(200).json(receta);
+    } catch (error) {
+        return res.status(500).json({ error: 'Surgió un error inesperado' });
+    }
+};
+
 //Funcion Create
 exports.crearReceta = async (req, res) => {
     const { error, validatedData } = validateCreateReceta(req);

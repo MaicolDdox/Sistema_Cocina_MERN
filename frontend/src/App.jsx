@@ -1,35 +1,74 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { RecetaProvider } from './context/RecetaContext';
+import Navbar from './components/layout/Navbar';
+import InicioView from './views/Inicio/InicioView';
+import CatalogoView from './views/Catalogo/CatalogoView';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+/**
+ * Componente raíz de la aplicación.
+ * Configura el router, el proveedor global de recetas y las notificaciones toast.
+ */
+const App = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <BrowserRouter>
+      <RecetaProvider>
+        {/* Notificaciones globales */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3500,
+            style: {
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '0.875rem',
+              borderRadius: '12px',
+              border: '1px solid var(--color-borde)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            },
+            success: {
+              iconTheme: {
+                primary: 'var(--color-secundario)',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#c0392b',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
 
-export default App
+        {/* Layout principal */}
+        <div style={{ minHeight: '100vh', background: 'var(--color-crema)' }}>
+          <Navbar />
+
+          {/* Definición de rutas */}
+          <Routes>
+            <Route path="/" element={<InicioView />} />
+            <Route path="/catalogo" element={<CatalogoView />} />
+            {/* Ruta catch-all — redirige al inicio */}
+            <Route path="*" element={<InicioView />} />
+          </Routes>
+
+          {/* Pie de página */}
+          <footer
+            className="text-center py-8 text-xs"
+            style={{
+              color: 'var(--color-texto-medio)',
+              borderTop: '1px solid var(--color-borde)',
+              background: '#fff',
+            }}
+          >
+            <p>
+              Sistema Cocina MERN &nbsp;·&nbsp; Desarrollado con React + Node.js + MongoDB
+            </p>
+          </footer>
+        </div>
+      </RecetaProvider>
+    </BrowserRouter>
+  );
+};
+
+export default App;
