@@ -40,19 +40,21 @@ const App = () => {
           }}
         />
 
-        {/* Layout principal */}
-        <div style={{ minHeight: '100vh', background: 'var(--color-crema)' }}>
+        {/* Layout principal — flex-col para sticky footer */}
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-crema)' }}>
           <Navbar />
 
-          {/* Definición de rutas */}
-          <Routes>
-            <Route path="/" element={<InicioView />} />
-            <Route path="/catalogo" element={<CatalogoView />} />
-            {/* Ruta catch-all — redirige al inicio */}
-            <Route path="*" element={<InicioView />} />
-          </Routes>
+          {/* Área de contenido — ocupa todo el espacio sobrante */}
+          <main style={{ flex: 1 }}>
+            <Routes>
+              <Route path="/" element={<InicioView />} />
+              <Route path="/catalogo" element={<CatalogoView />} />
+              {/* Ruta catch-all — redirige al inicio */}
+              <Route path="*" element={<InicioView />} />
+            </Routes>
+          </main>
 
-          {/* Pie de página */}
+          {/* Pie de página — siempre al fondo */}
           <footer
             className="text-center py-8 text-xs"
             style={{

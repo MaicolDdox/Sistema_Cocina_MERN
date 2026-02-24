@@ -1,34 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 // ─── Sub-componente: fila de ingrediente ─────────────────────────────────────
+// Usa grid para alinear las columnas exactamente con el encabezado superior.
 const FilaIngrediente = ({ ingrediente, indice, onCambio, onEliminar }) => (
-    <div className="flex gap-2 items-start">
+    <div className="grid gap-2 items-center" style={{ gridTemplateColumns: '1fr 6rem 6rem 2rem' }}>
         <input
             type="text"
-            placeholder="Nombre"
+            placeholder="Nombre del ingrediente"
             value={ingrediente.nombre || ''}
             onChange={(e) => onCambio(indice, 'nombre', e.target.value)}
-            className="input-global flex-1"
+            className="input-global"
         />
         <input
             type="number"
-            placeholder="Cantidad"
+            placeholder="0"
             min="0"
             value={ingrediente.cantidad || ''}
             onChange={(e) => onCambio(indice, 'cantidad', parseFloat(e.target.value) || '')}
-            className="input-global w-24"
+            className="input-global"
         />
         <input
             type="text"
-            placeholder="Unidad"
+            placeholder="gr, ml…"
             value={ingrediente.unidad || ''}
             onChange={(e) => onCambio(indice, 'unidad', e.target.value)}
-            className="input-global w-24"
+            className="input-global"
         />
         <button
             type="button"
             onClick={() => onEliminar(indice)}
-            className="p-2 rounded-lg transition-colors mt-0.5 flex-shrink-0"
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors flex-shrink-0"
             style={{ background: '#fde8e8', color: '#c0392b' }}
             title="Eliminar ingrediente"
         >
@@ -58,7 +59,7 @@ const FilaPaso = ({ paso, indice, onCambio, onEliminar }) => (
         <button
             type="button"
             onClick={() => onEliminar(indice)}
-            className="p-2 rounded-lg transition-colors mt-2 flex-shrink-0"
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors mt-2 flex-shrink-0"
             style={{ background: '#fde8e8', color: '#c0392b' }}
             title="Eliminar paso"
         >
@@ -78,6 +79,16 @@ const estadoInicial = {
 };
 
 /**
+ * Extrae solo los campos permitidos por la API de un objeto ingrediente.
+ * Elimina _id y cualquier campo extra que pueda venir de MongoDB.
+ */
+const sanitizarIngrediente = (ing) => ({
+    nombre: ing.nombre || '',
+    ...(ing.cantidad !== undefined && ing.cantidad !== '' ? { cantidad: ing.cantidad } : {}),
+    ...(ing.unidad ? { unidad: ing.unidad } : {}),
+});
+
+/**
  * Formulario dinámico para crear o editar una receta.
  * @param {Object|null} recetaInicial - Datos de la receta a editar (null si es nueva).
  * @param {Function} alGuardar - Callback con los datos listos para enviar.
@@ -85,14 +96,21 @@ const estadoInicial = {
  * @param {boolean} cargando - Si la operación está en progreso.
  * @param {string|null} errorExterno - Mensaje de error proveniente del backend.
  */
-const FormularioReceta = ({ recetaInicial = null, alGuardar, alCancelar, cargando = false, errorExterno = null }) => {
+const FormularioReceta = ({
+    recetaInicial = null,
+    alGuardar,
+    alCancelar,
+    cargando = false,
+    errorExterno = null,
+}) => {
     const [formulario, setFormulario] = useState(() => {
         if (recetaInicial) {
             return {
                 titulo: recetaInicial.titulo || '',
                 tiempo: recetaInicial.tiempo || '',
+                // Sanitizamos los ingredientes al cargar para eliminar _id de MongoDB
                 ingredientes: recetaInicial.ingredientes?.length
-                    ? recetaInicial.ingredientes
+                    ? recetaInicial.ingredientes.map(sanitizarIngrediente)
                     : [{ nombre: '', cantidad: '', unidad: '' }],
                 pasos: recetaInicial.pasos?.length
                     ? recetaInicial.pasos
@@ -131,10 +149,14 @@ const FormularioReceta = ({ recetaInicial = null, alGuardar, alCancelar, cargand
         e.preventDefault();
         if (!validarFormulario()) return;
 
+        // Sanitizamos ingredientes para enviar SOLO los campos que acepta la API:
+        // nombre, cantidad (número), unidad — sin _id ni otros campos de Mongoose.
         const datosLimpios = {
             titulo: formulario.titulo.trim(),
             tiempo: formulario.tiempo.trim(),
-            ingredientes: formulario.ingredientes.filter((ing) => ing.nombre?.trim()),
+            ingredientes: formulario.ingredientes
+                .filter((ing) => ing.nombre?.trim())
+                .map(sanitizarIngrediente),
             pasos: formulario.pasos.filter((p) => p.trim()),
         };
 
@@ -204,51 +226,37 @@ const FormularioReceta = ({ recetaInicial = null, alGuardar, alCancelar, cargand
                 </div>
             )}
 
-            {/* Título */}
+            {/* ── Título ──────────────────────────────────────────────── */}
             <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-texto-oscuro)' }}>
                     Título de la receta *
                 </label>
-                <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="var(--color-primario)" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                    </span>
-                    <input
-                        type="text"
-                        value={formulario.titulo}
-                        onChange={(e) => manejarCampoSimple('titulo', e.target.value)}
-                        placeholder="Ej: Torta de chocolate con fresas"
-                        className="input-global pl-9"
-                    />
-                </div>
+                <input
+                    type="text"
+                    value={formulario.titulo}
+                    onChange={(e) => manejarCampoSimple('titulo', e.target.value)}
+                    placeholder="Ej: Torta de chocolate con fresas"
+                    className="input-global"
+                />
                 {errores.titulo && <p className="text-xs mt-1" style={{ color: '#c0392b' }}>{errores.titulo}</p>}
             </div>
 
-            {/* Tiempo */}
+            {/* ── Tiempo ──────────────────────────────────────────────── */}
             <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-texto-oscuro)' }}>
                     Tiempo de preparación *
                 </label>
-                <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="var(--color-primario)" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </span>
-                    <input
-                        type="text"
-                        value={formulario.tiempo}
-                        onChange={(e) => manejarCampoSimple('tiempo', e.target.value)}
-                        placeholder="Ej: 45 minutos"
-                        className="input-global pl-9"
-                    />
-                </div>
+                <input
+                    type="text"
+                    value={formulario.tiempo}
+                    onChange={(e) => manejarCampoSimple('tiempo', e.target.value)}
+                    placeholder="Ej: 45 minutos"
+                    className="input-global"
+                />
                 {errores.tiempo && <p className="text-xs mt-1" style={{ color: '#c0392b' }}>{errores.tiempo}</p>}
             </div>
 
-            {/* Ingredientes */}
+            {/* ── Ingredientes ─────────────────────────────────────────── */}
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium" style={{ color: 'var(--color-texto-oscuro)' }}>
@@ -267,8 +275,8 @@ const FormularioReceta = ({ recetaInicial = null, alGuardar, alCancelar, cargand
                     </button>
                 </div>
 
-                {/* Encabezados de columnas */}
-                <div className="grid grid-cols-[1fr_6rem_6rem_2rem] gap-2 mb-1" style={{ paddingRight: '0.25rem' }}>
+                {/* Encabezados de columnas — mismo grid que las filas */}
+                <div className="grid gap-2 mb-1" style={{ gridTemplateColumns: '1fr 6rem 6rem 2rem' }}>
                     <span className="text-xs font-medium" style={{ color: 'var(--color-texto-medio)' }}>Nombre</span>
                     <span className="text-xs font-medium" style={{ color: 'var(--color-texto-medio)' }}>Cantidad</span>
                     <span className="text-xs font-medium" style={{ color: 'var(--color-texto-medio)' }}>Unidad</span>
@@ -288,7 +296,7 @@ const FormularioReceta = ({ recetaInicial = null, alGuardar, alCancelar, cargand
                 {errores.ingredientes && <p className="text-xs mt-1" style={{ color: '#c0392b' }}>{errores.ingredientes}</p>}
             </div>
 
-            {/* Pasos */}
+            {/* ── Pasos ────────────────────────────────────────────────── */}
             <div>
                 <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium" style={{ color: 'var(--color-texto-oscuro)' }}>
@@ -320,7 +328,7 @@ const FormularioReceta = ({ recetaInicial = null, alGuardar, alCancelar, cargand
                 {errores.pasos && <p className="text-xs mt-1" style={{ color: '#c0392b' }}>{errores.pasos}</p>}
             </div>
 
-            {/* Acciones del formulario */}
+            {/* ── Acciones del formulario ──────────────────────────────── */}
             <div className="flex justify-end gap-3 pt-2 border-t" style={{ borderColor: 'var(--color-borde)' }}>
                 <button type="button" className="btn-secundario" onClick={alCancelar} disabled={cargando}>
                     Cancelar

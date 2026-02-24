@@ -174,8 +174,9 @@ const CatalogoView = () => {
             if (recetasPagina.length === 1 && paginaActual > 1) {
                 setPaginaActual((prev) => prev - 1);
             }
-        } catch {
-            toast.error('No se pudo eliminar la receta');
+        } catch (err) {
+            const msg = err?.response?.data?.error || 'No se pudo eliminar la receta';
+            toast.error(msg);
         } finally {
             setEliminando(false);
         }
